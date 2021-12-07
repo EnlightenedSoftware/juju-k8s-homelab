@@ -73,8 +73,6 @@ services:
       monitor-count: 3
       expected-osd-count: 3
       source: distro
-    bindings:
-      "": oam-space
     to:
     - lxd:1001
     - lxd:1002
@@ -83,7 +81,7 @@ services:
     charm: cs:ceph-osd
     num_units: 3
     options:
-      osd-devices: /dev/sdb /dev/sdc
+      osd-devices: /dev/sdb /dev/sdc /dev/nvme0n1
       source: distro
     bindings:
       "": oam-space
