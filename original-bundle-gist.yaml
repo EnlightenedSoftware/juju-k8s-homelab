@@ -1,0 +1,115 @@
+description: A highly-available, production-grade Kubernetes cluster.
+series: focal
+machines:
+  # Baremetals
+  "1001":
+    constraints: tags=server1
+    series: focal
+  "1002":
+    constraints: tags=server2
+    series: focal
+  "1003":
+    constraints: tags=server3
+    series: focal
+services:
+  containerd:
+    charm: cs:~containers/containerd-97
+  easyrsa:
+    charm: cs:~containers/easyrsa-339
+    num_units: 1
+    to:
+    - lxd:1001
+  etcd:
+    charm: cs:~containers/etcd-544
+    num_units: 3
+    options:
+      channel: 3.4/stable
+    to:
+    - lxd:1001
+    - lxd:1002
+    - lxd:1003
+  flannel:
+    charm: cs:~containers/flannel-513
+  kubeapi-load-balancer:
+    charm: cs:~containers/kubeapi-load-balancer-753
+    expose: true
+    num_units: 1
+    to:
+    - lxd:1001
+  kubernetes-master:
+    charm: cs:~containers/kubernetes-master-912
+    num_units: 2
+    options:
+      channel: 1.19/stable
+      allow-privileged: "true"
+      authorization-mode: "RBAC,Node"
+    to:
+    - lxd:1002
+    - lxd:1003
+  kubernetes-worker:
+    charm: cs:~containers/kubernetes-worker-713
+    expose: true
+    num_units: 3
+    options:
+      channel: 1.19/stable
+      allow-privileged: "true"
+    to:
+    - 1001
+    - 1002
+    - 1003
+  ceph-mon:
+    charm: cs:ceph-mon-61
+    num_units: 3
+    options:
+      monitor-count: 3
+      expected-osd-count: 3
+      source: distro
+    to:
+    - lxd:1001
+    - lxd:1002
+    - lxd:1003
+  ceph-osd:
+    charm: cs:ceph-osd-315
+    num_units: 3
+    options:
+      osd-devices: /dev/sdb /dev/sdc
+      source: distro
+    to:
+    - 1001
+    - 1002
+    - 1003
+relations:
+- - kubernetes-master:kube-api-endpoint
+  - kubeapi-load-balancer:apiserver
+- - kubernetes-master:loadbalancer
+  - kubeapi-load-balancer:loadbalancer
+- - kubernetes-master:kube-control
+  - kubernetes-worker:kube-control
+- - kubernetes-master:certificates
+  - easyrsa:client
+- - etcd:certificates
+  - easyrsa:client
+- - kubernetes-master:etcd
+  - etcd:db
+- - kubernetes-worker:certificates
+  - easyrsa:client
+- - kubernetes-worker:kube-api-endpoint
+  - kubeapi-load-balancer:website
+- - kubeapi-load-balancer:certificates
+  - easyrsa:client
+- - flannel:etcd
+  - etcd:db
+- - flannel:cni
+  - kubernetes-master:cni
+- - flannel:cni
+  - kubernetes-worker:cni
+- - containerd:containerd
+  - kubernetes-worker:container-runtime
+- - containerd:containerd
+  - kubernetes-master:container-runtime
+- - ceph-osd:mon
+  - ceph-mon:osd
+- - ceph-mon:admin
+  - kubernetes-master
+- - ceph-mon:client
+  - kubernetes-master
