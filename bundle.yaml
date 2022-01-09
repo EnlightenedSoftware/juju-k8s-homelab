@@ -3,56 +3,89 @@ series: focal
 machines:
   # Baremetals
   "1001":
-    constraints: tags=server1 cores=20 mem=16G
+    constraints: tags=server1 cores=4
     series: focal
   "1002":
-    constraints: tags=server2 cores=20 mem=16G
+    constraints: tags=server2 cores=4
     series: focal
   "1003":
-    constraints: tags=server3 cores=20 mem=16G
+    constraints: tags=server3 cores=4
     series: focal
 services:
   containerd:
-    charm: cs:~containers/containerd-97
+    charm: cs:~containers/containerd-200
+    resources: {}
   easyrsa:
-    charm: cs:~containers/easyrsa-339
+    charm: cs:~containers/easyrsa-441
+    constraints: root-disk=8G
     num_units: 1
+    resources:
+      easyrsa: 5
     to:
     - lxd:1001
   etcd:
-    charm: cs:~containers/etcd-544
+    charm: cs:~containers/etcd-655
+    constraints: root-disk=8G
     num_units: 3
     options:
       channel: 3.4/stable
+    resources:
+      core: 0
+      etcd: 3
+      snapshot: 0
     to:
     - lxd:1001
     - lxd:1002
     - lxd:1003
   flannel:
-    charm: cs:~containers/flannel-513
+    charm: cs:~containers/flannel-619
+    resources:
+      flannel-amd64: 947
+      flannel-arm64: 944
+      flannel-s390x: 931
   kubeapi-load-balancer:
-    charm: cs:~containers/kubeapi-load-balancer-753
+    charm: cs:~containers/kubeapi-load-balancer-866
+    constraints: mem=4G root-disk=8G
     expose: true
     num_units: 1
+    resources: {}
     to:
     - 1001
   kubernetes-master:
-    charm: cs:~containers/kubernetes-master-912
+    charm: cs:~containers/kubernetes-master-1106
+    constraints: cores=2 mem=4G root-disk=16G
     num_units: 2
     options:
-      channel: 1.19/stable
-      allow-privileged: "true"
-      authorization-mode: "RBAC,Node"
+      channel: 1.23/stable
+    resources:
+      cdk-addons: 0
+      cni-amd64: 12
+      cni-arm64: 12
+      cni-s390x: 12
+      core: 0
+      kube-apiserver: 0
+      kube-controller-manager: 0
+      kube-proxy: 0
+      kube-scheduler: 0
+      kubectl: 0
     to:
     - lxd:1002
     - lxd:1003
   kubernetes-worker:
-    charm: cs:~containers/kubernetes-worker-713
+    charm: cs:~containers/kubernetes-worker-838
+    constraints: cores=4 mem=4G root-disk=16G
     expose: true
     num_units: 3
     options:
-      channel: 1.19/stable
-      allow-privileged: "true"
+      channel: 1.23/stable
+    resources:
+      cni-amd64: 983
+      cni-arm64: 974
+      cni-s390x: 986
+      core: 0
+      kube-proxy: 0
+      kubectl: 0
+      kubelet: 0
     to:
     - 1001
     - 1002

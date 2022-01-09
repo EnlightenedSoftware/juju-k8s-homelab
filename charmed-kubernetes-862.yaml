@@ -1,16 +1,5 @@
 description: A highly-available, production-grade Kubernetes cluster.
 series: focal
-machines:
-  # Baremetals
-  "1001":
-    constraints: tags=server1 cores=20 mem=16G
-    series: focal
-  "1002":
-    constraints: tags=server2 cores=20 mem=16G
-    series: focal
-  "1003":
-    constraints: tags=server3 cores=20 mem=16G
-    series: focal
 applications:
   containerd:
     annotations:
