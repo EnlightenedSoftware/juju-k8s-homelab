@@ -18,16 +18,16 @@ services:
     charm: cs:~containers/easyrsa-339
     num_units: 1
     to:
-    - 1001
+    - lxd:1001
   etcd:
     charm: cs:~containers/etcd-544
     num_units: 3
     options:
       channel: 3.4/stable
     to:
-    - 1001
-    - 1002
-    - 1003
+    - lxd:1001
+    - lxd:1002
+    - lxd:1003
   flannel:
     charm: cs:~containers/flannel-513
   kubeapi-load-balancer:
@@ -44,8 +44,8 @@ services:
       allow-privileged: "true"
       authorization-mode: "RBAC,Node"
     to:
-    - 1002
-    - 1003
+    - lxd:1002
+    - lxd:1003
   kubernetes-worker:
     charm: cs:~containers/kubernetes-worker-713
     expose: true
@@ -65,9 +65,9 @@ services:
       expected-osd-count: 3
       source: distro
     to:
-    - 1001
-    - 1002
-    - 1003
+    - lxd:1001
+    - lxd:1002
+    - lxd:1003
   ceph-osd:
     charm: cs:ceph-osd
     num_units: 3
