@@ -3,42 +3,39 @@ series: focal
 machines:
   # Baremetals
   "1001":
-    constraints: tags=baremetal
+    constraints: tags=server1 cores=20 mem=16G
+    series: focal
   "1002":
-    constraints: tags=baremetal
+    constraints: tags=server2 cores=20 mem=16G
+    series: focal
   "1003":
-    constraints: tags=baremetal
+    constraints: tags=server3 cores=20 mem=16G
+    series: focal
 services:
   containerd:
     charm: cs:~containers/containerd-97
   easyrsa:
     charm: cs:~containers/easyrsa-339
     num_units: 1
-    bindings:
-      "": oam-space
     to:
-    - lxd:1001
+    - 1001
   etcd:
     charm: cs:~containers/etcd-544
     num_units: 3
     options:
       channel: 3.4/stable
-    bindings:
-      "": oam-space
     to:
-    - lxd:1001
-    - lxd:1002
-    - lxd:1003
+    - 1001
+    - 1002
+    - 1003
   flannel:
     charm: cs:~containers/flannel-513
   kubeapi-load-balancer:
     charm: cs:~containers/kubeapi-load-balancer-753
     expose: true
     num_units: 1
-    bindings:
-      "": oam-space
     to:
-    - lxd:1001
+    - 1001
   kubernetes-master:
     charm: cs:~containers/kubernetes-master-912
     num_units: 2
@@ -46,11 +43,9 @@ services:
       channel: 1.19/stable
       allow-privileged: "true"
       authorization-mode: "RBAC,Node"
-    bindings:
-      "": oam-space
     to:
-    - lxd:1002
-    - lxd:1003
+    - 1002
+    - 1003
   kubernetes-worker:
     charm: cs:~containers/kubernetes-worker-713
     expose: true
@@ -58,8 +53,6 @@ services:
     options:
       channel: 1.19/stable
       allow-privileged: "true"
-    bindings:
-      "": oam-space
     to:
     - 1001
     - 1002
@@ -67,24 +60,20 @@ services:
   ceph-mon:
     charm: cs:ceph-mon
     num_units: 3
-    bindings:
-      "": oam-space
     options:
       monitor-count: 3
       expected-osd-count: 3
       source: distro
     to:
-    - lxd:1001
-    - lxd:1002
-    - lxd:1003
+    - 1001
+    - 1002
+    - 1003
   ceph-osd:
     charm: cs:ceph-osd
     num_units: 3
     options:
-      osd-devices: /dev/sdb /dev/sdc /dev/nvme0n1
+      osd-devices: /dev/sdb
       source: distro
-    bindings:
-      "": oam-space
     to:
     - 1001
     - 1002
