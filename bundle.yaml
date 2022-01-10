@@ -3,13 +3,13 @@ series: focal
 machines:
   # Baremetals
   "1001":
-    constraints: tags=server1 cores=4
+    constraints: tags=server1 cores=20 mem=22G
     series: focal
   "1002":
-    constraints: tags=server2 cores=4
+    constraints: tags=server2 cores=20 mem=90G
     series: focal
   "1003":
-    constraints: tags=server3 cores=4
+    constraints: tags=server3 cores=20 mem=22G
     series: focal
 services:
   containerd:
@@ -22,7 +22,7 @@ services:
     resources:
       easyrsa: 5
     to:
-    - lxd:1001
+    - 1001
   etcd:
     charm: cs:~containers/etcd-655
     constraints: root-disk=8G
@@ -34,9 +34,9 @@ services:
       etcd: 3
       snapshot: 0
     to:
-    - lxd:1001
-    - lxd:1002
-    - lxd:1003
+    - 1001
+    - 1002
+    - 1003
   flannel:
     charm: cs:~containers/flannel-619
     resources:
@@ -69,8 +69,8 @@ services:
       kube-scheduler: 0
       kubectl: 0
     to:
-    - lxd:1002
-    - lxd:1003
+    - 1002
+    - 1003
   kubernetes-worker:
     charm: cs:~containers/kubernetes-worker-838
     constraints: cores=4 mem=4G root-disk=16G
@@ -90,59 +90,55 @@ services:
     - 1001
     - 1002
     - 1003
-  ceph-mon:
-    charm: cs:ceph-mon
-    num_units: 3
-    options:
-      monitor-count: 3
-      expected-osd-count: 3
-      source: distro
-    to:
-    - lxd:1001
-    - lxd:1002
-    - lxd:1003
-  ceph-osd:
-    charm: cs:ceph-osd
-    num_units: 3
-    options:
-      osd-devices: /dev/sdb
-      source: distro
-    to:
-    - 1001
-    - 1002
-    - 1003
+#  ceph-mon:
+#    charm: cs:ceph-mon
+#    num_units: 3
+#    options:
+#      monitor-count: 3
+#      expected-osd-count: 3
+#      source: distro
+#    to:
+#    - 1001
+#    - 1002
+#    - 1003
+#  ceph-osd:
+#    charm: cs:ceph-osd
+#    num_units: 3
+#    options:
+#      osd-devices: /dev/sdb
+#      source: distro
+#    to:
+#    - 1001
+#    - 1002
+#    - 1003
 relations:
-- - kubernetes-master:kube-api-endpoint
-  - kubeapi-load-balancer:apiserver
-- - kubernetes-master:loadbalancer
-  - kubeapi-load-balancer:loadbalancer
-- - kubernetes-master:kube-control
-  - kubernetes-worker:kube-control
-- - kubernetes-master:certificates
-  - easyrsa:client
-- - etcd:certificates
-  - easyrsa:client
-- - kubernetes-master:etcd
-  - etcd:db
-- - kubernetes-worker:certificates
-  - easyrsa:client
-- - kubernetes-worker:kube-api-endpoint
-  - kubeapi-load-balancer:website
-- - kubeapi-load-balancer:certificates
-  - easyrsa:client
-- - flannel:etcd
-  - etcd:db
-- - flannel:cni
-  - kubernetes-master:cni
-- - flannel:cni
-  - kubernetes-worker:cni
-- - containerd:containerd
-  - kubernetes-worker:container-runtime
-- - containerd:containerd
-  - kubernetes-master:container-runtime
-- - ceph-osd:mon
-  - ceph-mon:osd
-- - ceph-mon:admin
-  - kubernetes-master
-- - ceph-mon:client
-  - kubernetes-master
+  - - kubernetes-master:loadbalancer-external
+    - kubeapi-load-balancer:lb-consumers
+  - - kubernetes-master:loadbalancer-internal
+    - kubeapi-load-balancer:lb-consumers
+  - - kubernetes-master:kube-control
+    - kubernetes-worker:kube-control
+  - - kubernetes-master:certificates
+    - easyrsa:client
+  - - etcd:certificates
+    - easyrsa:client
+  - - kubernetes-master:etcd
+    - etcd:db
+  - - kubernetes-worker:certificates
+    - easyrsa:client
+  - - kubeapi-load-balancer:certificates
+    - easyrsa:client
+  - - flannel:etcd
+    - etcd:db
+  - - flannel:cni
+    - kubernetes-master:cni
+  - - flannel:cni
+    - kubernetes-worker:cni
+  - - containerd:containerd
+    - kubernetes-worker:container-runtime
+  - - containerd:containerd
+    - kubernetes-master:container-runtime
+#- - ceph-osd:mon
+#  - ceph-mon:osd
+#- - ceph-mon:admin
+#- - ceph-mon:client
